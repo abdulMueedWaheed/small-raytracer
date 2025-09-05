@@ -1,0 +1,1 @@
+make && SDL_VIDEODRIVER=x11 ./output
