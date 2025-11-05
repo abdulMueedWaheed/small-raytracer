@@ -118,6 +118,8 @@ void DrawRays(SDL_Surface* surface, struct Ray rays[RAYS_NUMBER], Uint32 color) 
 }
 
 Uint32 InterpolateColor(Uint32 color1, Uint32 color2, double t) {
+    if (t > 1) t = 1;
+
     // Extract RGBA components
     Uint8 r1 = (color1 >> 16) & 0xFF;
     Uint8 g1 = (color1 >> 8) & 0xFF;
@@ -135,7 +137,7 @@ Uint32 InterpolateColor(Uint32 color1, Uint32 color2, double t) {
     return 0xFF000000 | (r << 16) | (g << 8) | b;
 }
 
-void DrawLineGradient(SDL_Surface* surface, int x0, int y0, int x1, int y1, Uint32 startColor, Uint32 endColor) {
+void DrawLineCooler(SDL_Surface* surface, int x0, int y0, int x1, int y1, Uint32 startColor, Uint32 endColor) {
     int dx = abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;
     int dy = -abs(y1 - y0);
@@ -143,12 +145,13 @@ void DrawLineGradient(SDL_Surface* surface, int x0, int y0, int x1, int y1, Uint
     int err = dx + dy;
     int e2;
     
-    double totalDistance = sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+    double totalDistance = 500;
+    // double totalDistance = sqrt(dx*dx + dy*dy);
     int startX = x0, startY = y0;
 
     while (true) {
         double currentDistance = sqrt((x0 - startX) * (x0 - startX) + (y0 - startY) * (y0 - startY));
-        double t = (totalDistance > 0) ? (currentDistance / totalDistance) : 0;
+        double t = currentDistance / totalDistance;
         
         Uint32 color = InterpolateColor(startColor, endColor, t);
         SetPixel(surface, x0, y0, color);
@@ -160,9 +163,9 @@ void DrawLineGradient(SDL_Surface* surface, int x0, int y0, int x1, int y1, Uint
     }
 }
 
-void DrawRaysGradient(SDL_Surface* surface, struct Ray rays[RAYS_NUMBER], Uint32 startColor, Uint32 endColor) {
+void DrawRaysCooler(SDL_Surface* surface, struct Ray rays[RAYS_NUMBER], Uint32 startColor, Uint32 endColor) {
     for (int i = 0 ; i < RAYS_NUMBER ; i++) {
-        DrawLineGradient(surface,
+        DrawLineCooler(surface,
                         (int)rays[i].x1, (int)rays[i].y1,
                         (int)rays[i].x2, (int)rays[i].y2,
                         startColor, endColor);
@@ -174,10 +177,10 @@ void DrawRaysGradient(SDL_Surface* surface, struct Ray rays[RAYS_NUMBER], Uint32
 void GenerateRays(struct Circle light, struct Ray rays[RAYS_NUMBER], struct Circle block) {
     double angleStep = (2 * M_PI) / RAYS_NUMBER;
     double angle = 0;
+    
     for (int i = 0 ; i < RAYS_NUMBER ; i++) {
         angle += angleStep;
 
-        
         struct Ray ray = CalculateRay(light, angle, block);
         rays[i] = ray;
     }
@@ -256,7 +259,7 @@ int main() {
         SDL_FillRect(surface, NULL, COLOR_BLACK);
         
         FillCircle(surface, light_circle, COLOR_YELLOW);
-        DrawRaysGradient(surface, rays, COLOR_BLUE1, COLOR_BLUE2);
+        DrawRaysCooler(surface, rays, COLOR_ORANGE, COLOR_DARK_PURPLE);
         FillCircle(surface, shadow_circle, COLOR_GREY);
 
         SDL_UpdateWindowSurface(window);
