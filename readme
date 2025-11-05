@@ -1,0 +1,15 @@
+## Ray Tracing Simulation with Gradient Effects
+A real-time 2D ray tracing simulation built with C and SDL2, featuring dynamic lighting, shadow casting, and beautiful gradient effects.
+Features
+
+- Interactive Light Source: Drag the yellow circle to move the light source around the screen
+- Dynamic Shadows: A blocking object (grey circle) casts realistic shadows as light rays are obstructed
+- Gradient Rays: Rays transition from bright orange to dark purple, creating a stunning sunset effect
+- Real-time Rendering: Smooth 60 FPS interactive visualization
+- Draggable Objects: Both the light source and shadow-casting object can be moved with your mouse
+
+### Prerequisites
+To compile and run this program, you need:
+
+- GCC or another C compiler
+- SDL2 development libraries

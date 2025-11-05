@@ -1,17 +1,30 @@
-#include <SDL2/SDL_stdinc.h>
-#include <math.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 #include <stdio.h>
 
 #define WIDTH 900
 #define HEIGHT 600
-#define RAYS_NUMBER 200
+#define RAYS_NUMBER 400
 
 #define COLOR_WHITE 0xffffffff
 #define COLOR_BLACK 0x00000000
 #define COLOR_YELLOW 0xFFFFD700
 #define COLOR_GREY 0xFFA9A9A9
+
+#define COLOR_ORANGE 0xFFFFA500
+#define COLOR_DARK_PURPLE 0xFF1a0033
+
+// Bright to dim white: 0xFFFFFFFF
+#define COLOR_DIM_WHITE 0xFF333333
+// Golds
+#define COLOR_GOLD 0xFFFFD700
+#define COLOR_SOMEOTHERGOLD_IDK 0xFFFF4500
+//Blue twilight:
+#define COLOR_BLUE1 0xFF87CEEB
+#define COLOR_BLUE2 0xFF000033
+// Fire
+#define Fire1 0xFFFFFF00
+#define Fire2 0xFFFF0000
 
 struct Circle
 {
@@ -57,7 +70,12 @@ _Bool WithinCircle(double x, double y, struct Circle circle) {
 }
 
 struct Ray CalculateRay(struct Circle light, double angle, struct Circle block) {
-    double cx = light.x, cy = light.y;
+    // Start from the surface of the light circle
+    double start_x = light.x + light.r * cos(angle);
+    double start_y = light.y + light.r * sin(angle);
+    
+    double cx = start_x;
+    double cy = start_y;
     
     while(true) {
         if (cx < 0 || cx >= WIDTH || cy < 0 || cy >= HEIGHT || WithinCircle(cx, cy, block)) {
@@ -68,7 +86,7 @@ struct Ray CalculateRay(struct Circle light, double angle, struct Circle block) 
         cy = cy + 1*sin(angle);
     }
 
-    struct Ray newRay = {light.x, light.y, cx, cy};
+    struct Ray newRay = {start_x, start_y, cx, cy};
     return newRay;
 }
 
@@ -98,6 +116,59 @@ void DrawRays(SDL_Surface* surface, struct Ray rays[RAYS_NUMBER], Uint32 color) 
                  color);
     }
 }
+
+Uint32 InterpolateColor(Uint32 color1, Uint32 color2, double t) {
+    // Extract RGBA components
+    Uint8 r1 = (color1 >> 16) & 0xFF;
+    Uint8 g1 = (color1 >> 8) & 0xFF;
+    Uint8 b1 = color1 & 0xFF;
+    
+    Uint8 r2 = (color2 >> 16) & 0xFF;
+    Uint8 g2 = (color2 >> 8) & 0xFF;
+    Uint8 b2 = color2 & 0xFF;
+    
+    // Interpolate each component
+    Uint8 r = (Uint8)(r1 + t * (r2 - r1));
+    Uint8 g = (Uint8)(g1 + t * (g2 - g1));
+    Uint8 b = (Uint8)(b1 + t * (g2 - b1));
+    
+    return 0xFF000000 | (r << 16) | (g << 8) | b;
+}
+
+void DrawLineGradient(SDL_Surface* surface, int x0, int y0, int x1, int y1, Uint32 startColor, Uint32 endColor) {
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy;
+    int e2;
+    
+    double totalDistance = sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+    int startX = x0, startY = y0;
+
+    while (true) {
+        double currentDistance = sqrt((x0 - startX) * (x0 - startX) + (y0 - startY) * (y0 - startY));
+        double t = (totalDistance > 0) ? (currentDistance / totalDistance) : 0;
+        
+        Uint32 color = InterpolateColor(startColor, endColor, t);
+        SetPixel(surface, x0, y0, color);
+        
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
+
+void DrawRaysGradient(SDL_Surface* surface, struct Ray rays[RAYS_NUMBER], Uint32 startColor, Uint32 endColor) {
+    for (int i = 0 ; i < RAYS_NUMBER ; i++) {
+        DrawLineGradient(surface,
+                        (int)rays[i].x1, (int)rays[i].y1,
+                        (int)rays[i].x2, (int)rays[i].y2,
+                        startColor, endColor);
+    }
+}
+
 
 
 void GenerateRays(struct Circle light, struct Ray rays[RAYS_NUMBER], struct Circle block) {
@@ -185,7 +256,7 @@ int main() {
         SDL_FillRect(surface, NULL, COLOR_BLACK);
         
         FillCircle(surface, light_circle, COLOR_YELLOW);
-        DrawRays(surface, rays, COLOR_WHITE);
+        DrawRaysGradient(surface, rays, COLOR_BLUE1, COLOR_BLUE2);
         FillCircle(surface, shadow_circle, COLOR_GREY);
 
         SDL_UpdateWindowSurface(window);
