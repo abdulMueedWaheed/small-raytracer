@@ -93,7 +93,7 @@ struct Ray CalculateRay(struct Circle light, double angle, struct Circle block) 
 void DrawLine(SDL_Surface* surface, int x0, int y0, int x1, int y1, Uint32 color) {
     int dx = abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0);
+    int dy = abs(y1 - y0);
     int sy = y0 < y1 ? 1 : -1;
     int err = dx + dy;
     int e2;
@@ -259,7 +259,7 @@ int main() {
         SDL_FillRect(surface, NULL, COLOR_BLACK);
         
         FillCircle(surface, light_circle, COLOR_YELLOW);
-        DrawRaysCooler(surface, rays, COLOR_ORANGE, COLOR_DARK_PURPLE);
+        DrawRaysCooler(surface, rays, COLOR_BLUE1, COLOR_BLUE2);
         FillCircle(surface, shadow_circle, COLOR_GREY);
 
         SDL_UpdateWindowSurface(window);
